@@ -3,10 +3,10 @@
 namespace Domain\Auth\Tests\Feature;
 
 use Tests\TestCase;
+use Illuminate\Support\Str;
 use Domain\Auth\Models\User;
 use Illuminate\Http\Response;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Str;
 
 class LoginTest extends TestCase
 {
