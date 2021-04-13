@@ -15,20 +15,30 @@ class StoreTeamTest extends TestCase
   /** @test */
   public function it_can_create_team()
   {
-    $this->actingAs(User::factory()->create());
+    $this->actingAs($user = User::factory()->create());
 
-    $response = $this->postJson(route('team.store'), [
+    $resp = $this->postJson(route('team.store'), [
       'name' => $this->faker->name,
       'color' => $this->faker->hexColor,
     ]);
 
-    $response
+    $resp
       ->assertStatus(Response::HTTP_CREATED)
       ->assertJsonStructure(['success', 'code', 'message', 'data'])
       ->assertJson([
         'success' => true,
         'code' => Response::HTTP_CREATED,
         'message' => 'Team successfully created.',
+      ]);
+
+    // Assert membership is created along with team creation, and the creator is added as a member.
+    $this
+      ->assertDatabaseCount('teams', 1)
+      ->assertDatabaseCount('team_members', 1)
+      ->assertDatabaseHas('team_members', [
+        'team_id' => json_decode($resp->getContent())->data->id,
+        'member_id' => $user->id,
+        'accepted' => 1
       ]);
   }
 
@@ -37,9 +47,9 @@ class StoreTeamTest extends TestCase
   {
     $this->actingAs(User::factory()->create());
 
-    $response = $this->postJson(route('team.store'), []);
+    $resp = $this->postJson(route('team.store'), []);
 
-    $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY)
+    $resp->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY)
       ->assertJsonValidationErrors(['name', 'color'])
       ->assertJson([
         'errors' => [
@@ -54,12 +64,12 @@ class StoreTeamTest extends TestCase
   {
     $this->actingAs(User::factory()->create());
 
-    $response = $this->postJson(route('team.store'), [
+    $resp = $this->postJson(route('team.store'), [
       'name' => $this->faker->name,
       'color' => 'test',
     ]);
 
-    $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY)
+    $resp->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY)
       ->assertJsonValidationErrors(['color'])
       ->assertJson([
         'errors' => [
@@ -73,12 +83,12 @@ class StoreTeamTest extends TestCase
   {
     $this->actingAs(User::factory()->create());
 
-    $response = $this->postJson(route('team.store'), [
+    $resp = $this->postJson(route('team.store'), [
       'name' => 'asd',
       'color' => $this->faker->hexColor,
     ]);
 
-    $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY)
+    $resp->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY)
       ->assertJsonValidationErrors(['name'])
       ->assertJson([
         'errors' => ['name' => [__('validation.min.string', ['attribute' => 'name', 'min' => 6])]]
