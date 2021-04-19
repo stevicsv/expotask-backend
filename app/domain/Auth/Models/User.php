@@ -2,9 +2,12 @@
 
 namespace Domain\Auth\Models;
 
+use Domain\Team\Models\Team;
+use Domain\Team\Models\Membership;
+use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class User extends Authenticatable
 {
@@ -39,4 +42,16 @@ class User extends Authenticatable
 	protected $casts = [
 		'email_verified_at' => 'datetime',
 	];
+
+	/**
+	 * Return users teams.
+	 * 
+	 * @return BelongsToMany
+	 */
+	public function teams(): BelongsToMany
+	{
+		return $this
+			->belongsToMany(Team::class, 'team_members', 'member_id', 'team_id')
+			->using(Membership::class);
+	}
 }
